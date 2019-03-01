@@ -12,14 +12,14 @@ result_landlots_file = 'data-result-landlots.json'
 
 # result file operator:: write
 def failure_result_listener(queue):
-    f = open(retrying_postal_codes_file, 'w') 
+    f = open(retrying_postal_codes_file, 'wb') 
     try:
         while 1:
             m = queue.get()
             if m == 'kill':
                 f.write('killed')
                 break
-            f.write(str(m))
+            f.write(m.encode('utf-8'))
             f.flush()
     except Exception as e:
         print('Writing file failed, with error: {}'.format(e))
@@ -29,14 +29,14 @@ def failure_result_listener(queue):
 
 def success_result_listener(queue):
     '''listens for messages on the queue, writes to file. '''
-    f = open(result_landlots_file, 'w') 
+    f = open(result_landlots_file, 'wb') 
     try:
         while 1:
             m = queue.get()
             if m == 'kill':
                 f.write('killed')
                 break
-            f.write(str(m))
+            f.write(m.encode('utf-8'))
             f.flush()
     except Exception as e:
         print('Writing file failed, with error: {}'.format(e))
@@ -80,13 +80,13 @@ def pcode_to_data(pcode, success_message_queue, failure_message_queue):
 
         except Exception as e:
             print('Fetching {0} failed. Skip and continue in 2 sec, with error: {1}'.format(pcode, e))
-            failure_message_queue.put(pcode)
+            failure_message_queue.put("{0}\n".format(pcode))
 
             time.sleep(2)
             continue
 
     if (len(results) > 0):
-        jstr = json.dumps(results).encode('utf-8')
+        jstr = json.dumps(results, indent=2, sort_keys=True)
         # print(">>>> Putting: data-length-{0}".format(len(jstr)))
         success_message_queue.put(jstr)
     return results
